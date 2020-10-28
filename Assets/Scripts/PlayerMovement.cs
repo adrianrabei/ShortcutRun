@@ -7,7 +7,11 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody player;
     [SerializeField] private Camera cam;
     [SerializeField] private float moveSpeed = 10f;
-    
+    [SerializeField] private GameObject plancPrefab;
+    [SerializeField] private int plancCount;
+    [SerializeField] private GameObject plancPos;
+    private bool canSpawn;
+
     void Start()
     {
         player = GetComponent<Rigidbody>();
@@ -29,9 +33,23 @@ public class PlayerMovement : MonoBehaviour
 
     private void OnCollisionExit(Collision collision)
     {
-        Debug.Log("No more contact with " + collision.transform.name);
-        player.AddForce(Vector3.up * 5, ForceMode.Impulse);
-        Falling();
+        canSpawn = true;
+        if(plancCount != 0)
+        {
+            Debug.Log("SET PLANC");
+            SetPlanc();
+        }
+        else
+        {
+            Debug.Log("No more contact with " + collision.transform.name);
+            player.AddForce(Vector3.up * 5, ForceMode.Impulse);
+            Falling();
+        }
+    }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        canSpawn = false;
     }
 
     public void Falling()
@@ -39,6 +57,15 @@ public class PlayerMovement : MonoBehaviour
         if(player.velocity.y < 0)
         {
             Physics.gravity = new Vector3(0, -15, 0);
+        }
+    }
+
+    public void SetPlanc()
+    {
+        if(canSpawn)
+        {
+            Instantiate(plancPrefab, plancPos.transform.position, plancPos.transform.rotation);
+            //plancCount--;
         }
     }
 
