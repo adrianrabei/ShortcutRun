@@ -8,22 +8,25 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private Camera cam;
     [SerializeField] private float moveSpeed = 10f, jumpForce = 10f;
     [SerializeField] private GameObject plancPrefab;
-    [SerializeField] private int plancCount;
-    [SerializeField] private GameObject plancPos;
-    private bool canSpawn, canJump, isPlanc, isFirstPlanc, jumped, onGround, onPlanc;
+    [SerializeField] private int plancCount, handPlancCount = 0;
+    public GameObject plancPos, handPlancPos;
+    private bool isFirstPlanc, onGround, onPlanc;
     private RaycastHit hit;
     [SerializeField] private GameObject rayOriginPos;
     private float plancDistance;
-    private GameObject currentPlancPos;
+    private GameObject currentPlancPos, currentHandPlanc;
+    private Animator animator;
+    public bool destroyHandPlanc;
 
     void Start()
     {
         player = GetComponent<Rigidbody>();
+        animator = GetComponent<Animator>();
     }
 
     void FixedUpdate()
     {
-        player.transform.Translate(Vector3.right * moveSpeed * Time.deltaTime);
+        player.transform.Translate(Vector3.forward * moveSpeed * Time.deltaTime);
 
         if (Input.GetMouseButton(0))
         {
@@ -37,19 +40,22 @@ public class PlayerMovement : MonoBehaviour
         if(onGround || onPlanc)
         {
             GroundCheck();
+            if(plancCount == 0)
+            {
+                animator.SetBool("isPlanc", false);
+            }
         }
     }
-
-
 
     private void GroundCheck()
     {
         if (Physics.Raycast(rayOriginPos.transform.position, Vector3.down, out hit) && hit.transform.tag == "Ground" || hit.transform != null && hit.transform.tag == "Planc")
         {
-           
+            //ON GROUND
         }
         else
         {
+            //FALLING
             if (plancCount != 0)
             {
                 if (!isFirstPlanc)
@@ -67,7 +73,11 @@ public class PlayerMovement : MonoBehaviour
                     }
                 }
             }
-            else Jump();
+            else
+            {
+                Jump();
+            }
+
         }
     }
 
@@ -81,32 +91,46 @@ public class PlayerMovement : MonoBehaviour
         {
             onPlanc = true;
         }
+
+        if(collision.transform.tag == "Pick")
+        {
+            plancCount++;
+            Destroy(collision.gameObject);
+            PlancHolding();
+            animator.SetBool("isPlanc", true);
+        }
     }
 
     public void GravityAmplification()
     {
         if(player.velocity.y < 0)
         {
-            Physics.gravity = new Vector3(0, -15, 0);
+            Physics.gravity = new Vector3(0, -17, 0);
         }
     }
 
     private void SetPlanc()
     {
-        if (plancCount != 0)
-        {
-            currentPlancPos = Instantiate(plancPrefab, plancPos.transform.position, plancPos.transform.rotation);
-            plancCount--;
-        }
+        currentPlancPos = Instantiate(plancPrefab, plancPos.transform.position, Quaternion.identity);
+        plancCount--;
+        destroyHandPlanc = true;
     }
 
     private void Jump()
     {
-        Debug.Log("JUMP");
+        player.velocity = Vector3.zero;
         player.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        animator.SetTrigger("Jump");
         GravityAmplification();
         onGround = false;
         onPlanc = false;
+    }
+
+    private void PlancHolding()
+    {
+        handPlancPos.transform.position = new Vector3(handPlancPos.transform.position.x, handPlancPos.transform.position.y + 0.05f, handPlancPos.transform.position.z);
+        currentHandPlanc = Instantiate(plancPrefab, handPlancPos.transform.position, transform.rotation);
+        currentHandPlanc.transform.parent = gameObject.transform;
     }
 
 }

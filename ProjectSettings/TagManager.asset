@@ -6,6 +6,7 @@ TagManager:
   tags:
   - Ground
   - Planc
+  - Pick
   layers:
   - Default
   - TransparentFX
